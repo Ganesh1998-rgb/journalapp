@@ -2,7 +2,7 @@
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://gborase81:Borase12345@cluster0.s4zbpqx.mongodb.net/journaldb
+      
       auto-index-creation: true
 
 
