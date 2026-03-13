@@ -43,5 +43,10 @@ return ResponseEntity.ok(gretting);
     return ResponseEntity.ok(" Hi "+authentication.getName());
     }
 
+
+    @GetMapping("/weather/{city}")
+    public WheatherApiResponse getWeather(@PathVariable String city){
+        return wheatherService.getWeather(city);
+    }
 }
 
