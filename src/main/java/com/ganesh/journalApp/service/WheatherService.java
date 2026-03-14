@@ -1,9 +1,9 @@
 package com.ganesh.journalApp.service;
 
 import com.ganesh.journalApp.apiResponse.WheatherApiResponse;
-import lombok.AllArgsConstructor;
+import com.ganesh.journalApp.cache.AppCache;
+import com.ganesh.journalApp.constant.PlaceHolder;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +19,13 @@ public class WheatherService {
 
 @Value("${api.key}")
 private String apiKey;
-private String API="http://api.weatherstack.com/current?access_key=API_KEY&query=CITY";
 
+private final  AppCache appCache;
 
 
 public WheatherApiResponse getWheather(String city){
 
-    String replace = API.replace("CITY", city).replace("API_KEY", apiKey);
+    String replace = appCache.APP_CACHE.get(AppCache.Keys.WEATHER_API.name().toLowerCase()).replace(PlaceHolder.CITY, city).replace(PlaceHolder.API_KEY, apiKey);
 
     ResponseEntity<WheatherApiResponse> exchange = restTemplate.exchange(replace, HttpMethod.GET, null, WheatherApiResponse.class);
     WheatherApiResponse body = exchange.getBody();
@@ -35,16 +35,10 @@ public WheatherApiResponse getWheather(String city){
 
 
     public WheatherApiResponse getWeather(String city) {
-
+        String weatherApi = appCache.APP_CACHE.get(AppCache.Keys.WEATHER_API.name().toLowerCase()).replace(PlaceHolder.CITY, city).replace(PlaceHolder.API_KEY, apiKey);
         return webClient
                 .get()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http")
-                        .host("api.weatherstack.com")
-                        .path("/current")
-                        .queryParam("access_key", apiKey)
-                        .queryParam("query", city)
-                        .build())
+                .uri(weatherApi)
                 .retrieve()
                 .bodyToMono(WheatherApiResponse.class)
                 .block();   // blocking only for testing
