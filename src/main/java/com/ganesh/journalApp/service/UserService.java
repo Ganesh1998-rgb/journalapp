@@ -1,8 +1,12 @@
 package com.ganesh.journalApp.service;
 
+import com.ganesh.journalApp.dto.UserRequestDTO;
+import com.ganesh.journalApp.dto.UserResponseDTO;
 import com.ganesh.journalApp.entity.User;
 import com.ganesh.journalApp.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -12,11 +16,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserService {
 
+private final ModelMapper modelMapper;
     private final UserRepository userRepository;
 private static final PasswordEncoder passwordEncoder= new BCryptPasswordEncoder();
 private static final Logger log= LoggerFactory.getLogger(UserService.class);
@@ -26,16 +32,13 @@ private static final Logger log= LoggerFactory.getLogger(UserService.class);
         return userRepository.save(user);
     }
 
-    public User saveNewUser(User user) {
+    public UserResponseDTO saveNewUser(UserRequestDTO userDTO) {
         try {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            return userRepository.save(user);
+            userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            User map = modelMapper.map(userDTO, User.class);
+            User save = userRepository.save(map);
+            return modelMapper.map(save, UserResponseDTO.class);
         } catch (Exception e) {
-            log.info("haahahahhaaahhahhaahhah");
-            log.error("fdfsfsffsfsfsfsfsffsfsf");
-            log.warn("sdfdsfsdffsdgggsgsgg");
-            log.trace("sdfdssgdsgsgsgsdsgsgg");
-            log.debug("sfsfsffsffsfsfsdfasdf");
             throw new RuntimeException(e);
         }
 
@@ -45,8 +48,12 @@ private static final Logger log= LoggerFactory.getLogger(UserService.class);
         return userRepository.save(user);
     }
 
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public List<UserResponseDTO> getAll() {
+        List<User> all = userRepository.findAll();
+        return all.stream()
+                .map(user -> modelMapper.map(user, UserResponseDTO.class))
+                .toList();
+
     }
 
     public User findByUserName(String username) {

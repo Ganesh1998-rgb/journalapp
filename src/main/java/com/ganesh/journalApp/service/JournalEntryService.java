@@ -1,10 +1,13 @@
 package com.ganesh.journalApp.service;
 
+import com.ganesh.journalApp.dto.JournalEntryRequestDTO;
+import com.ganesh.journalApp.dto.JournalEntryResponseDTO;
 import com.ganesh.journalApp.entity.JournalEntry;
 import com.ganesh.journalApp.entity.User;
 import com.ganesh.journalApp.repository.JournalRepository;
 import lombok.AllArgsConstructor;
 import org.bson.types.ObjectId;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -16,21 +19,24 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class JournalEntryService {
-
+private final ModelMapper modelMapper;
     private final  JournalRepository journalRepository;
     private final UserService userService;
 
     @Transactional
-    public JournalEntry saveEntry(JournalEntry entry){
+    public JournalEntryResponseDTO saveEntry(JournalEntryRequestDTO dto){
         try {
-            entry.setCreatedAt(LocalDateTime.now());
+            JournalEntry entry = modelMapper.map(dto, JournalEntry.class);
+entry.setCreatedAt(LocalDateTime.now());
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             User user = userService.findByUserName(username);
             JournalEntry save = journalRepository.save(entry);
             user.getJournalEntries().add(save);
             userService.saveUser(user);
-            return save;
+            JournalEntryResponseDTO map = modelMapper.map(save, JournalEntryResponseDTO.class);
+map.setId(save.getId().toHexString());
+return map;
         } catch (Exception e) {
            throw new RuntimeException("Exception occured "+e);
 

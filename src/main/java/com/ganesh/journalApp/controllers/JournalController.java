@@ -1,26 +1,41 @@
 package com.ganesh.journalApp.controllers;
 
+import com.ganesh.journalApp.dto.JournalEntryRequestDTO;
+import com.ganesh.journalApp.dto.JournalEntryResponseDTO;
 import com.ganesh.journalApp.entity.JournalEntry;
 import com.ganesh.journalApp.entity.User;
 import com.ganesh.journalApp.service.JournalEntryService;
 import com.ganesh.journalApp.service.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 import lombok.AllArgsConstructor;
+
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/journalEntry")
 @AllArgsConstructor
+@Tag(name = "Journal Entry APIs", description = "APIs for managing journal entries")
 public class JournalController {
 
-private  final JournalEntryService journalEntryService;
-private final UserService userService;
+    private final JournalEntryService journalEntryService;
+    private final UserService userService;
+
+    @Operation(summary = "Get all journal entries", description = "Fetch all journal entries for the authenticated user")
+    @ApiResponse(responseCode = "200", description = "Entries fetched successfully")
     @GetMapping("/username")
     public ResponseEntity<List<JournalEntry>> getAllEntriesForUser() {
         try {
@@ -30,18 +45,32 @@ private final UserService userService;
         }
     }
 
+    @Operation(summary = "Create a new journal entry")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Journal entry created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body")
+    })
     @PostMapping
-    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry entry) {
+    public ResponseEntity<JournalEntryResponseDTO> createEntry(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Journal entry object to be created")
+            @RequestBody JournalEntryRequestDTO entry) {
         try {
-            JournalEntry saved = journalEntryService.saveEntry(entry);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+            JournalEntryResponseDTO journalEntryResponseDTO = journalEntryService.saveEntry(entry);
+            return ResponseEntity.status(HttpStatus.CREATED).body(journalEntryResponseDTO);
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
     }
 
+    @Operation(summary = "Get journal entry by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Entry found"),
+            @ApiResponse(responseCode = "404", description = "Entry not found")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<?> getEntryById(@PathVariable ObjectId id) {
+    public ResponseEntity<?> getEntryById(
+            @Parameter(description = "Journal entry ID")
+            @PathVariable ObjectId id) {
         try {
             JournalEntry entry = journalEntryService.getEntryById(id);
             return ResponseEntity.ok(entry);
@@ -50,18 +79,32 @@ private final UserService userService;
         }
     }
 
+    @Operation(summary = "Delete journal entry by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Entry deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Entry not found")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEntry(@PathVariable ObjectId id) {
+    public ResponseEntity<Void> deleteEntry(
+            @Parameter(description = "Journal entry ID")
+            @PathVariable ObjectId id) {
         journalEntryService.deleteEntry(id);
         return ResponseEntity.noContent().build();
-
     }
 
 
+   /* @Operation(summary = "Update journal entry by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Entry updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Entry not found or not owned by user")
+    })
+
     @PutMapping("/{id}")
-    public ResponseEntity<JournalEntry> updateEntry(
+    public ResponseEntity<JournalEntryResponseDTO> updateEntry(
+            @Parameter(description = "Journal entry ID")
             @PathVariable ObjectId id,
-            @RequestBody JournalEntry entry) {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Updated journal entry data")
+            @RequestBody JournalEntryRequestDTO entry) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -82,11 +125,8 @@ private final UserService userService;
         old.setContent(entry.getContent());
         old.setUpdatedAt(LocalDateTime.now());
 
-        JournalEntry updated = journalEntryService.saveEntry(old);
+        JournalEntryResponseDTO journalEntryResponseDTO = journalEntryService.saveEntry(old);
 
-        return ResponseEntity.ok(updated);
-    }
-    }
-
-
-
+        return ResponseEntity.ok(journalEntryResponseDTO);
+    }*/
+}

@@ -29,4 +29,5 @@ public class User {
 private List<JournalEntry> journalEntries=new ArrayList<>();
 private List<String> roles;
 
+
 }
