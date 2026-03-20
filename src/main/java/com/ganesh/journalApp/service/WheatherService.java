@@ -57,9 +57,10 @@ public WheatherApiResponse getWheather(String city) {
             if(block!=null){
                 redisService.setValue("weather_of_"+city,block,300L);
             }
+
             return block;
         }
-        // blocking only for testing
+       
     }
 
 }
