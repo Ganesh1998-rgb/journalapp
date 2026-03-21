@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: journal-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: journal-app
+  template:
+    metadata:
+      labels:
+        app: journal-app
+    spec:
+      containers:
+        - name: journal-container
+          image: ganu853/springboot:latest0.1
+          ports:
+            - containerPort: 8080
+
+          envFrom:   # ✅ CORRECT PLACE
+            - secretRef:
+                name: journal-secret
