@@ -11,4 +11,5 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 public class UserResponseDTO {
     private String userName;
+    private String lastname;
 }
