@@ -17,7 +17,7 @@ public class EventController {
     @GetMapping("/{message}")
     public ResponseEntity<?> publishMessage(@PathVariable String message) {
         try {
-            kafkaMessagePublisher.sendMessage(message);
+       //  kafkaMessagePublisher.sendMessage(message);
             return ResponseEntity.ok("Message send scesfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
