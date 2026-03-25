@@ -1,10 +1,12 @@
 package com.ganesh.journalapp.service;
 
 
+import com.ganesh.common.dto.JournalCreatedEventDTO;
 import com.ganesh.common.dto.JournalEntryRequestDTO;
 import com.ganesh.common.dto.JournalEntryResponseDTO;
 import com.ganesh.journalapp.entity.JournalEntry;
 import com.ganesh.journalapp.entity.User;
+import com.ganesh.journalapp.kafka.KafkaMessagePublisher;
 import com.ganesh.journalapp.repository.JournalRepository;
 import lombok.AllArgsConstructor;
 import org.bson.types.ObjectId;
@@ -20,27 +22,34 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class JournalEntryService {
-private final ModelMapper modelMapper;
-    private final  JournalRepository journalRepository;
+    private final ModelMapper modelMapper;
+    private final JournalRepository journalRepository;
     private final UserService userService;
+    private final KafkaMessagePublisher kafkaMessagePublisher;
 
     @Transactional
     public JournalEntryResponseDTO saveEntry(JournalEntryRequestDTO dto){
         try {
             JournalEntry entry = modelMapper.map(dto, JournalEntry.class);
-entry.setCreatedAt(LocalDateTime.now());
+            entry.setCreatedAt(LocalDateTime.now());
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             User user = userService.findByUserName(username);
             JournalEntry save = journalRepository.save(entry);
             user.getJournalEntries().add(save);
             userService.saveUser(user);
+            // Publish event to Kafka
+            JournalCreatedEventDTO event = new JournalCreatedEventDTO(
+                user.getEmail(), // Assumes User entity has getEmail()
+                save.getTitle(),
+                save.getContent()
+            );
+            kafkaMessagePublisher.sendMessage(event);
             JournalEntryResponseDTO map = modelMapper.map(save, JournalEntryResponseDTO.class);
-map.setId(save.getId().toHexString());
-return map;
+            map.setId(save.getId().toHexString());
+            return map;
         } catch (Exception e) {
-           throw new RuntimeException("Exception occured "+e);
-
+            throw new RuntimeException("Exception occured "+e);
         }
 
     }
